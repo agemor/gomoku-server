@@ -1,2 +1,2 @@
-# highfive
+# omok.io server
 omok.io server
