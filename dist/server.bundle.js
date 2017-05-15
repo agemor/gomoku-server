@@ -92,23 +92,21 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 let server = __WEBPACK_IMPORTED_MODULE_0_http___default.a.createServer();
+let port = 5555;
 
-server.listen(5555);
+server.listen(port);
 
-// Create a Socket.IO instance, passing it our server
 var socket = __WEBPACK_IMPORTED_MODULE_1_socket_io___default.a.listen(server);
 
-// Add a connect listener
 socket.on('connection', function (client) {
     console.log('Connection to client established');
 
-    // Success!  Now listen to messages to be received
     client.on('message', function (event) {
         console.log('Received message from client!', event);
     });
 
     client.on('disconnect', function () {
-        clearInterval(interval);
+        //clearInterval(interval);
         console.log('Server has disconnected');
     });
 });

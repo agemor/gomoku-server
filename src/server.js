@@ -1,10 +1,10 @@
 import http from 'http';
 import io from 'socket.io';
 
-
 let server = http.createServer();
+let port = 5555;
 
-server.listen(5555);
+server.listen(port);
 
 var socket = io.listen(server);
 
@@ -16,7 +16,7 @@ socket.on('connection', function(client){
     });
 
     client.on('disconnect',function(){
-        clearInterval(interval);
+        //clearInterval(interval);
         console.log('Server has disconnected');
     });
 });
