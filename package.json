@@ -25,6 +25,7 @@
     "webpack": "^2.5.1"
   },
   "dependencies": {
+    "jsonwebtoken": "^7.4.1",
     "socket.io": "^2.0.1"
   }
 }
