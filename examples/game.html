@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game room 'foobar'</title>
+</head>
+<body>
+  This is game page
+  <br/>
+  <input type="text" id="textbox">
+<button onclick="playMove()">Play</button>
+</body>
+<script src="http://localhost:5555/socket.io/socket.io.js"></script>
+  <script>
+var socket = io('http://localhost:5555');
+
+function parseURL() {
+  var searchObject = {};
+  var queries = window.location.search.replace(/^\?/, '').split('&');
+  for( i = 0; i < queries.length; i++ ) {
+        var split = queries[i].split('=');
+        searchObject[split[0]] = split[1];
+    }
+  return searchObject;
+}
+
+var event = parseURL();
+
+socket.emit('start game', event);
+
+var playerColor;
+var gameToken;
+var roomId;
+socket.on('game ready', function(event) {
+  console.log("Game is ready!");
+  console.log(event);
+  playerColor = event.stoneColor;
+  gameToken = event.token;
+  roomId = event.roomId;
+});
+
+socket.on('stone place', function(event) {
+  console.log("Stone placed at %s", event.coord);
+});
+
+socket.on('move invalid', function() {
+  console.log("Move invalid!");
+});
+
+function playMove() {
+  var move = document.getElementById("textbox").value;
+  socket.emit('play move', {token:gameToken, roomId:roomId, move:move});
+}
+  </script>
+</html>
