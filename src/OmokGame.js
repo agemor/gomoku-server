@@ -6,6 +6,7 @@ export default class OmokGame {
         this.board = {placement:[], boardSize:boardSize}
         this.victory = 0;
         this.playerIds = [];
+        this.currentTurn = "black";
     }
     placeStone(coord, stoneColor) {
         console.log(stoneColor);
@@ -13,10 +14,12 @@ export default class OmokGame {
         let y = Number(coord.slice(1));
 
         if (this.algorithm.checkValidity(x,y,stoneColor,this.board)) {
-            if (this.algorithm.checkVictory(x,y, stoneColor, this.board)) {
+            let stoneColorValue = stoneColor == "black" ? 1 : 2;
+            if (this.algorithm.checkVictory(x,y, stoneColorValue, this.board)) {
                 this.victory = stoneColor;
             }
-            this.board.placement[y * this.board.boardSize + x] = stoneColor;
+            this.board.placement[y * this.board.boardSize + x] = stoneColorValue;
+            this.currentTurn = this.currentTurn == "black" ? "white" : "black";
         } else {
             throw Error("Invalid move");
         }
