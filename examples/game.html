@@ -44,17 +44,19 @@ socket.on('game ready', function(token, stoneColor) {
   gameToken = token;
 });
 
-socket.on('stone place', function(event) {
-  console.log("Stone placed at %s", event.coord);
-});
-
-socket.on('move invalid', function() {
-  console.log("Move invalid!");
+socket.on('stone placed', function(stoneColor, move, gameEnd) {
+  console.log("%s stone placed at %s", stoneColor, move);
 });
 
 function playMove() {
   var move = document.getElementById("textbox").value;
-  socket.emit('play move', {token:gameToken, roomId:roomId, move:move});
+  socket.emit('play move', gameToken, roomId, move, function(response) {
+    if (response.success) {
+      console.log(response.message);
+    } else {
+      console.log(response.error.message);
+    }
+  });
 }
   </script>
 </html>
