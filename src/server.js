@@ -59,31 +59,22 @@ socket.on('connection', function(client){
     //  event: roomId, token
     client.on('join game', function() {
         //  Set variable parameters
-        let roomToken;
-        let roomId;
-        let callback;
+        let roomToken = arguments[arguments.length-3];
+        let roomId = arguments[arguments.length-2];
+        let callback = arguments[arguments.length-1];
 
-        if (arguments.length == 2) {
-            roomId = arguments[0];
-            callback = arguments[1];
-        } else if (arguments.length == 3) {
-            roomToken = arguments[0];
-            roomId = arguments[1];
-            callback = arguments[2];
-        } else {
-            console.log("Wrong number of arguments for 'join game'");
-        }
-
-        if (! gameMap.has(roomId)) {
-            callback({success:false, error: {code:20, message:"invalid room id"}});
+        if (!( typeof(roomId)=='string' && typeof(callback)=='function' )) {
+            callback({success:false, error: {code:20, message:"invalid arguments"}});
+        } else if (! gameMap.has(roomId)) {
+            callback({success:false, error: {code:21, message:"invalid room id"}});
         } else {
             if (roomToken) {
                 jwt.verify(roomToken, SECRET_KEY, function(err, decoded) {
                     if (!decoded) {
                         console.log(err);
-                        callback({success:false, error: {code:21, message:"invalid token"}});
+                        callback({success:false, error: {code:22, message:"invalid token"}});
                     } else if (decoded.roomId !== roomId) {
-                        callback({success:false, error: {code:22, message:"token does not match room"}});
+                        callback({success:false, error: {code:23, message:"token does not match room"}});
                     } else {
                         let omokGame = gameMap.get(roomId);
                         omokGame.playerIds.push(client.id);
@@ -101,7 +92,7 @@ socket.on('connection', function(client){
                             socket.to(omokGame.playerIds[0]).emit('game ready', gameToken1,stoneColor1);
                             socket.to(omokGame.playerIds[1]).emit('game ready', gameToken2,stoneColor2);
                         } else {
-                            callback({success:false, error: {code:23, message:"invalid number of users"}});
+                            callback({success:false, error: {code:24, message:"invalid number of users"}});
                         }
                     }
                 });
