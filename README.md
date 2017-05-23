@@ -52,6 +52,6 @@ otherwise
  - `stoneColor` String: stone color of player
 
 **Event: 'stone placed'** `<-` 'play move'
- - `move` String: coordinates of the stone. Ex.) "i14"
  - `stoneColor` String: "black" or "white"
+ - `move` String: coordinates of the stone. Ex.) "i14"
  - `gameEnd` Boolean: true if winning move
