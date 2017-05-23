@@ -23,9 +23,10 @@ socket.on('connection', function(client){
     let userAdded = false;
 
     //  lobby handlers
-    client.on('find opponent', function() {
+    client.on('find opponent', function(callback) {
         if (userAdded == false) {
             if (lobbyUsers.length !== 0) {
+                callback({success:true, message: "found match"});
                 // take first user out of queue
                 let opponentId = lobbyUsers.shift(); 
                 console.log("Matching user <%s> with user <%s>...", client.id, opponentId);
@@ -46,8 +47,11 @@ socket.on('connection', function(client){
             } else {
                 lobbyUsers.push(client.id);
                 userAdded = true;
+                callback({success:true, message: "added to queue"});
                 console.log("Added user <%s> to queue!", client.id);
             }
+        } else {
+            callback({success:false, error: {code:10, message:"user already in queue"}});
         }
     });
 

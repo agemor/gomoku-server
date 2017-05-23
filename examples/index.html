@@ -18,8 +18,14 @@ socket.on('room created', function(event) {
 });
 
 function joinGame() {
-  console.log("Joining game...");
-  socket.emit('find opponent');
+  console.log("Finding room...");
+  socket.emit('find opponent', function(response) {
+    if (response.success) {
+      console.log(response.message);
+    } else {
+      console.log(response.error.message);
+    }
+  });
 }
 socket.on('room created', function(event) {
   window.location = "http://" + window.location.host + "/game.html?roomId=" + event.roomId + "&token=" + event.token;
