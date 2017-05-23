@@ -40,6 +40,7 @@ otherwise
 **Event: 'play move'**
  - `gameToken` JsonWebToken
  - `roomId` String
+ - `move` String
  - `callback(response: ServerResponse)` Function
 
 ### Server-emitted events
