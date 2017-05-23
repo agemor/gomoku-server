@@ -105,34 +105,41 @@ socket.on('connection', function(client){
     });
 
     //  event: move, roomId, token
-    client.on('play move', function(event) {
+    client.on('play move', function(gameToken, roomId, move, callback) {
         console.log("Playing move..");
-        if (event.token) {
-            jwt.verify(event.token, SECRET_KEY, function(err, decoded) {
-                if (decoded) {
-                    if (decoded.roomId == event.roomId) {
-                        let game = gameMap.get(event.roomId);
+
+        if (!( typeof(gameToken)=='string' && typeof(roomId)=='string' && typeof(move)=='string' && typeof(callback)=='function' )) {
+            callback({success:false, error: {code:30, message:"invalid arguments"}});
+        } else if (! gameMap.has(roomId)) {
+            callback({success:false, error: {code:31, message:"invalid room id"}});
+        } else {
+            jwt.verify(gameToken, SECRET_KEY, function(err, decoded) {
+                if (!decoded) {
+                    console.log(err);
+                    callback({success:false, error: {code:32, message:"invalid token"}});
+                } else if (decoded.roomId !== roomId) {
+                    callback({success:false, error: {code:33, message:"token does not match room"}});
+                } else {
+                    let omokGame = gameMap.get(roomId);
+                    if (omokGame.currentTurn != decoded.stoneColor) {
+                        callback({success:false, error: {code:34, message:"opponent's turn"}});
+                    } else {
                         try {
-                            game.placeStone(event.move, decoded.stoneColor);
+                            omokGame.placeStone(move, decoded.stoneColor);
                             let gameEnded = false;
-                            if (game.victory == decoded.stoneColor) {
-                                let gameEnded = true;
+                            if (omokGame.victory == decoded.stoneColor) {
+                                gameEnded = true;
                             }
-                            socket.in(event.roomId).emit('stone place', {color:decoded.stoneColor, coord:event.move, gameend:gameEnded});;
+                            callback({success:true, message:"player made valid move"});
+                            socket.in(roomId).emit('stone placed', decoded.stoneColor, move, gameEnd);;
                         }
                         catch (err) {
                             console.log(err);
-                            socket.to(client.id).emit('move invalid');
+                            callback({success:false, error: {code:35, message:"invalid move"}});
                         }
-                    } else {
-                        throw Error("roomId and token's roomId does not match");
                     }
-                } else {
-                    throw Error("Error decoding token!");
                 }
             });
-        } else {
-            throw Error("No token given");
         }
     });
 
