@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Game room 'foobar'</title>
+  <title>Game room</title>
 </head>
 <body>
   This is game page
@@ -24,19 +24,24 @@ function parseURL() {
   return searchObject;
 }
 
-var event = parseURL();
+var roomInfo = parseURL();
+var roomToken = roomInfo["roomToken"];
+var roomId = roomInfo["roomId"];
 
-socket.emit('start game', event);
+socket.emit('join game', roomToken, roomId, function(response) {
+  if (response.success) {
+    console.log("SERVER:::" + response.message);
+  } else {
+    console.log("SERVER:::" + response.error.message);
+  }
+});
 
 var playerColor;
 var gameToken;
-var roomId;
-socket.on('game ready', function(event) {
+socket.on('game ready', function(token, stoneColor) {
   console.log("Game is ready!");
-  console.log(event);
-  playerColor = event.stoneColor;
-  gameToken = event.token;
-  roomId = event.roomId;
+  playerColor = stoneColor;
+  gameToken = token;
 });
 
 socket.on('stone place', function(event) {

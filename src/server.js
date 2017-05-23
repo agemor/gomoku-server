@@ -40,10 +40,10 @@ socket.on('connection', function(client){
                 gameMap.set(roomId,new OmokGame(15));
 
                 //  create token
-                let token = jwt.sign({roomId: roomId}, SECRET_KEY);
+                let roomToken = jwt.sign({roomId: roomId}, SECRET_KEY);
 
                 //  emit roomId and token to players
-                socket.to(client.id).to(opponentId).emit('room created', {roomId: roomId, token: token});
+                socket.to(client.id).to(opponentId).emit('room created', roomToken, roomId);
             } else {
                 lobbyUsers.push(client.id);
                 userAdded = true;
@@ -57,43 +57,58 @@ socket.on('connection', function(client){
 
     //  game handlers
     //  event: roomId, token
-    client.on('start game', function(event) {
-        if (event.token) {
-            jwt.verify(event.token, SECRET_KEY, function(err, decoded) {
-                if(decoded) {
-                    if (decoded.roomId == event.roomId) {
-                        let omokGame = gameMap.get(event.roomId);
-                        if (omokGame) {
-                            omokGame.playerIds.push(client.id);
-                            client.join(event.roomId);
-                            if (omokGame.playerIds.length == 2) {
-                                let stoneColor = Math.floor(Math.random() *2) + 1;
-                                let token1 = jwt.sign({roomId: event.roomId, stoneColor:stoneColor}, SECRET_KEY);
-                                let token2 = jwt.sign({roomId: event.roomId, stoneColor:3-stoneColor}, SECRET_KEY);
-                                socket.to(omokGame.playerIds[0]).emit('game ready', {token:token1,roomId:event.roomId,stoneColor:stoneColor});
-                                socket.to(omokGame.playerIds[1]).emit('game ready', {token:token2,roomId:event.roomId,stoneColor:3-stoneColor});
-                            }
-                        } else {
-                            throw Error("Game doesn't exist yet");
-                        }
-                    } else {
-                        throw Error("Given roomId and token's roomId does not match!");
-                    }
-               } else {
-                    throw Error("Error decoding token");
-                }
-            });
+    client.on('join game', function() {
+        //  Set variable parameters
+        let roomToken;
+        let roomId;
+        let callback;
+
+        if (arguments.length == 2) {
+            roomId = arguments[0];
+            callback = arguments[1];
+        } else if (arguments.length == 3) {
+            roomToken = arguments[0];
+            roomId = arguments[1];
+            callback = arguments[2];
         } else {
-            if (event.roomId) {
-                let omokGame = gameMap.get(event.roomId);
-                if (omokGame) {
-                    socket.to(client.id).emit('board get',{board: omokGame.board});
-                    client.join(event.roomId);
-                } else {
-                    throw Error("Game doesn't exist yet");
-                }
+            console.log("Wrong number of arguments for 'join game'");
+        }
+
+        if (! gameMap.has(roomId)) {
+            callback({success:false, error: {code:20, message:"invalid room id"}});
+        } else {
+            if (roomToken) {
+                jwt.verify(roomToken, SECRET_KEY, function(err, decoded) {
+                    if (!decoded) {
+                        console.log(err);
+                        callback({success:false, error: {code:21, message:"invalid token"}});
+                    } else if (decoded.roomId !== roomId) {
+                        callback({success:false, error: {code:22, message:"token does not match room"}});
+                    } else {
+                        let omokGame = gameMap.get(roomId);
+                        omokGame.playerIds.push(client.id);
+                        client.join(roomId);
+
+                        if (omokGame.playerIds.length == 1) {
+                            callback({success:true, message:"waiting for other player"});
+                        }
+                        else if (omokGame.playerIds.length == 2) {
+                            callback({success:true, message:"game joined as player"});
+                            let stoneColor1 = Math.floor(Math.random() *2) == 0 ? "black"  : "white";
+                            let stoneColor2 = stoneColor1 == "black" ? "white" : "black";
+                            let gameToken1 = jwt.sign({roomId: roomId, stoneColor:stoneColor1}, SECRET_KEY);
+                            let gameToken2 = jwt.sign({roomId: roomId, stoneColor:stoneColor2}, SECRET_KEY);
+                            socket.to(omokGame.playerIds[0]).emit('game ready', gameToken1,stoneColor1);
+                            socket.to(omokGame.playerIds[1]).emit('game ready', gameToken2,stoneColor2);
+                        } else {
+                            callback({success:false, error: {code:23, message:"invalid number of users"}});
+                        }
+                    }
+                });
             } else {
-                throw Error("User has neither token or room id");
+                let omokGame = gameMap.get(roomId);
+                client.join(roomId);
+                callback({success:true, message:"game joined as observer", data:{board:omokGame.board}});
             }
         }
     });

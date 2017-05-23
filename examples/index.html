@@ -27,8 +27,8 @@ function joinGame() {
     }
   });
 }
-socket.on('room created', function(event) {
-  window.location = "http://" + window.location.host + "/game.html?roomId=" + event.roomId + "&token=" + event.token;
+socket.on('room created', function(roomToken, roomId) {
+  window.location = "http://" + window.location.host + "/game.html?roomId=" + roomId + "&roomToken=" + roomToken;
 });
   </script>
 </html>
