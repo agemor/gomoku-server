@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 6);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,7 +71,21 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OmokAlgorithm_js__ = __webpack_require__(4);
+class OmokStone {}
+/* harmony export (immutable) */ __webpack_exports__["a"] = OmokStone;
+
+
+OmokStone.BLACK = "black";
+OmokStone.WHITE = "white";
+
+/***/ }),
+/* 1 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OmokAlgorithm_js__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__OmokStone__ = __webpack_require__(0);
+
 
 
 class OmokGame {
@@ -80,22 +94,19 @@ class OmokGame {
         this.board = { placement: [], boardSize: boardSize };
         this.victory = 0;
         this.playerIds = [];
-        this.currentTurn = "black";
+        this.currentTurn = __WEBPACK_IMPORTED_MODULE_1__OmokStone__["a" /* default */].BLACK;
     }
     placeStone(coord, stoneColor) {
-        console.log(stoneColor);
 
         let x = this.fromStringCoordinate(coord).x;
         let y = this.fromStringCoordinate(coord).y;
 
-        let stoneColorValue = stoneColor == "black" ? 1 : 2;
-
-        if (this.algorithm.checkValidity(x, y, stoneColorValue, this.board)) {
-            if (this.algorithm.checkVictory(x, y, stoneColorValue, this.board)) {
+        if (this.algorithm.checkValidity(x, y, stoneColor, this.board)) {
+            if (this.algorithm.checkVictory(x, y, stoneColor, this.board)) {
                 this.victory = stoneColor;
             }
-            this.board.placement[y * this.board.boardSize + x] = stoneColorValue;
-            this.currentTurn = this.currentTurn == "black" ? "white" : "black";
+            this.board.placement[y * this.board.boardSize + x] = stoneColor == __WEBPACK_IMPORTED_MODULE_1__OmokStone__["a" /* default */].BLACK ? 1 : 2;;
+            this.currentTurn = this.currentTurn == __WEBPACK_IMPORTED_MODULE_1__OmokStone__["a" /* default */].BLACK ? __WEBPACK_IMPORTED_MODULE_1__OmokStone__["a" /* default */].WHITE : __WEBPACK_IMPORTED_MODULE_1__OmokStone__["a" /* default */].BLACK;
         } else {
             throw Error("Invalid move");
         }
@@ -109,28 +120,31 @@ class OmokGame {
 
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports) {
 
 module.exports = require("http");
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports) {
 
 module.exports = require("jsonwebtoken");
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports) {
 
 module.exports = require("socket.io");
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OmokStone__ = __webpack_require__(0);
+
+
 class OmokAlgorithm {
     constructor() {}
 
@@ -141,10 +155,12 @@ class OmokAlgorithm {
      */
     checkVictory(x, y, stoneColor, board) {
 
+        let stoneColorValue = stoneColor == __WEBPACK_IMPORTED_MODULE_0__OmokStone__["a" /* default */].BLACK ? 1 : 2;
+
         let boardClone = {
             placement: board.placement.slice(0), boardSize: board.boardSize
         };
-        boardClone.placement[y * board.boardSize + x] = stoneColor;
+        boardClone.placement[y * board.boardSize + x] = stoneColorValue;
 
         // 돌 연산자
         let at = (sx, sy) => boardClone.placement[sy * board.boardSize + sx];
@@ -175,16 +191,18 @@ class OmokAlgorithm {
      */
     checkValidity(x, y, stoneColor, board) {
 
+        let stoneColorValue = stoneColor == __WEBPACK_IMPORTED_MODULE_0__OmokStone__["a" /* default */].BLACK ? 1 : 2;
+
         let boardClone = {
             placement: board.placement.slice(0), boardSize: board.boardSize
         };
-        boardClone.placement[y * board.boardSize + x] = stoneColor;
+        boardClone.placement[y * board.boardSize + x] = stoneColorValue;
 
         // 삼삼 체크
-        let notDoubleThree = !this.checkDoubleN(x, y, stoneColor, boardClone, 3);
+        let notDoubleThree = !this.checkDoubleN(x, y, stoneColorValue, boardClone, 3);
 
         // 사사 체크
-        let notDoubleFour = !this.checkDoubleN(x, y, stoneColor, boardClone, 4);
+        let notDoubleFour = !this.checkDoubleN(x, y, stoneColorValue, boardClone, 4);
 
         return notDoubleThree && notDoubleFour;
     }
@@ -192,14 +210,14 @@ class OmokAlgorithm {
     /**
      * NN 체크
      */
-    checkDoubleN(x, y, stoneColor, board, n) {
+    checkDoubleN(x, y, stoneColorValue, board, n) {
 
         // 돌 연산자
         let at = (sx, sy) => board.placement[sy * board.boardSize + sx];
         let inbound = (sx, sy) => sx >= 0 && sy >= 0 && sx < board.boardSize && sy < board.boardSize;
 
         // 기준 돌
-        let criterion = stoneColor;
+        let criterion = stoneColorValue;
         let opponent = criterion == 1 ? 2 : 1;
 
         // 한쪽 방향으로 열림성 검사
@@ -259,18 +277,18 @@ class OmokAlgorithm {
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_http__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_http__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_http___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_http__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_socket_io__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_socket_io__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_socket_io___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_socket_io__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_jsonwebtoken__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_jsonwebtoken__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_jsonwebtoken___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_jsonwebtoken__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__OmokGame_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__OmokGame_js__ = __webpack_require__(1);
 
 
 

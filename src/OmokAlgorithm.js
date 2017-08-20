@@ -1,3 +1,5 @@
+import OmokStone from "./OmokStone";
+
 export default class OmokAlgorithm {
     constructor() {
     }
@@ -11,10 +13,12 @@ export default class OmokAlgorithm {
      */
     checkVictory(x, y, stoneColor, board) {
 
+        let stoneColorValue = (stoneColor == OmokStone.BLACK) ? 1 : 2;
+
         let boardClone = {
             placement: board.placement.slice(0), boardSize: board.boardSize,
         }
-        boardClone.placement[y * board.boardSize + x] = stoneColor;
+        boardClone.placement[y * board.boardSize + x] = stoneColorValue;
 
         // 돌 연산자
         let at = (sx, sy) => boardClone.placement[sy * board.boardSize + sx];
@@ -40,16 +44,18 @@ export default class OmokAlgorithm {
      */
     checkValidity(x, y, stoneColor, board) {
 
+        let stoneColorValue = (stoneColor == OmokStone.BLACK) ? 1 : 2;
+
         let boardClone = {
             placement: board.placement.slice(0), boardSize: board.boardSize,
         }
-        boardClone.placement[y * board.boardSize + x] = stoneColor;
+        boardClone.placement[y * board.boardSize + x] = stoneColorValue;
 
         // 삼삼 체크
-        let notDoubleThree = !this.checkDoubleN(x, y, stoneColor, boardClone, 3);
+        let notDoubleThree = !this.checkDoubleN(x, y, stoneColorValue, boardClone, 3);
 
         // 사사 체크
-        let notDoubleFour = !this.checkDoubleN(x, y, stoneColor, boardClone, 4);
+        let notDoubleFour = !this.checkDoubleN(x, y, stoneColorValue, boardClone, 4);
 
         return notDoubleThree && notDoubleFour;
     }
@@ -57,14 +63,14 @@ export default class OmokAlgorithm {
     /**
      * NN 체크
      */
-    checkDoubleN(x, y, stoneColor, board, n) {
+    checkDoubleN(x, y, stoneColorValue, board, n) {
 
         // 돌 연산자
         let at = (sx, sy) => board.placement[sy * board.boardSize + sx];
         let inbound = (sx, sy) => (sx >= 0 && sy >= 0 && sx < board.boardSize && sy < board.boardSize);
 
         // 기준 돌
-        let criterion = stoneColor;
+        let criterion = stoneColorValue;
         let opponent = criterion == 1 ? 2 : 1;
 
         // 한쪽 방향으로 열림성 검사

@@ -1,4 +1,5 @@
 import OmokAlgorithm from './OmokAlgorithm.js';
+import OmokStone from "./OmokStone";
 
 export default class OmokGame {
     constructor(boardSize) {
@@ -6,22 +7,19 @@ export default class OmokGame {
         this.board = {placement:[], boardSize:boardSize}
         this.victory = 0;
         this.playerIds = [];
-        this.currentTurn = "black";
+        this.currentTurn = OmokStone.BLACK;
     }
     placeStone(coord, stoneColor) {
-        console.log(stoneColor);
 
         let x = this.fromStringCoordinate(coord).x;
         let y = this.fromStringCoordinate(coord).y;
-        
-        let stoneColorValue = stoneColor == "black" ? 1 : 2;
 
-        if (this.algorithm.checkValidity(x, y, stoneColorValue, this.board)) {
-            if (this.algorithm.checkVictory(x, y, stoneColorValue, this.board)) {
+        if (this.algorithm.checkValidity(x, y, stoneColor, this.board)) {
+            if (this.algorithm.checkVictory(x, y, stoneColor, this.board)) {
                 this.victory = stoneColor;
             }
-            this.board.placement[y * this.board.boardSize + x] = stoneColorValue;
-            this.currentTurn = this.currentTurn == "black" ? "white" : "black";
+            this.board.placement[y * this.board.boardSize + x] = (stoneColor == OmokStone.BLACK ? 1 : 2);;
+            this.currentTurn = this.currentTurn == OmokStone.BLACK ? OmokStone.WHITE : OmokStone.BLACK;
         } else {
             throw Error("Invalid move");
         }
