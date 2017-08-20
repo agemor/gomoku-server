@@ -10,12 +10,14 @@ export default class OmokGame {
     }
     placeStone(coord, stoneColor) {
         console.log(stoneColor);
-        let x = coord[0].charCodeAt(0) - 96;
-        let y = Number(coord.slice(1));
 
-        if (this.algorithm.checkValidity(x,y,stoneColor,this.board)) {
-            let stoneColorValue = stoneColor == "black" ? 1 : 2;
-            if (this.algorithm.checkVictory(x,y, stoneColorValue, this.board)) {
+        let x = this.fromStringCoordinate(coord).x;
+        let y = this.fromStringCoordinate(coord).y;
+        
+        let stoneColorValue = stoneColor == "black" ? 1 : 2;
+
+        if (this.algorithm.checkValidity(x, y, stoneColorValue, this.board)) {
+            if (this.algorithm.checkVictory(x, y, stoneColorValue, this.board)) {
                 this.victory = stoneColor;
             }
             this.board.placement[y * this.board.boardSize + x] = stoneColorValue;
@@ -23,5 +25,9 @@ export default class OmokGame {
         } else {
             throw Error("Invalid move");
         }
+    }
+
+    fromStringCoordinate(coord) {
+        return {x: coord.charCodeAt(0) - 97, y: Number(coord.slice(1))};
     }
 }
