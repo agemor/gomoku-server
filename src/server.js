@@ -23,7 +23,7 @@ socket.on('connection', function(client){
     let userAdded = false;
 
     //  lobby handlers
-    client.on('find opponent', function(data, callback) {
+    client.on('find opponent', function(data) {
         if (userAdded == false) {
             if (lobbyUsers.length !== 0) {
 
