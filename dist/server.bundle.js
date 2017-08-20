@@ -105,7 +105,7 @@ class OmokGame {
             if (this.algorithm.checkVictory(x, y, stoneColor, this.board)) {
                 this.victory = stoneColor;
             }
-            this.board.placement[y * this.board.boardSize + x] = stoneColor == __WEBPACK_IMPORTED_MODULE_1__OmokStone__["a" /* default */].BLACK ? 1 : 2;;
+            this.board.placement[y * this.board.boardSize + x] = stoneColor == __WEBPACK_IMPORTED_MODULE_1__OmokStone__["a" /* default */].BLACK ? 1 : 2;
             this.currentTurn = this.currentTurn == __WEBPACK_IMPORTED_MODULE_1__OmokStone__["a" /* default */].BLACK ? __WEBPACK_IMPORTED_MODULE_1__OmokStone__["a" /* default */].WHITE : __WEBPACK_IMPORTED_MODULE_1__OmokStone__["a" /* default */].BLACK;
         } else {
             throw Error("Invalid move");
@@ -113,7 +113,7 @@ class OmokGame {
     }
 
     fromStringCoordinate(coord) {
-        return { x: coord.charCodeAt(0) - 97, y: Number(coord.slice(1)) };
+        return { x: coord.charCodeAt(0) - 97, y: Number(coord.slice(1)) - 1 };
     }
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = OmokGame;
@@ -314,7 +314,7 @@ socket.on('connection', function (client) {
     let userAdded = false;
 
     //  lobby handlers
-    client.on('find opponent', function (data, callback) {
+    client.on('find opponent', function (data) {
         if (userAdded == false) {
             if (lobbyUsers.length !== 0) {
 
@@ -330,13 +330,13 @@ socket.on('connection', function (client) {
                     roomId = Math.random().toString(36).substr(2, 10);
                 } while (gameMap.has(roomId));
 
-                gameMap.set(roomId, new __WEBPACK_IMPORTED_MODULE_3__OmokGame_js__["a" /* default */](15));
+                gameMap.set(roomId, new __WEBPACK_IMPORTED_MODULE_3__OmokGame_js__["a" /* default */](30));
 
                 //  create token
                 let roomToken = __WEBPACK_IMPORTED_MODULE_2_jsonwebtoken___default.a.sign({ roomId: roomId }, SECRET_KEY);
 
                 //  emit roomId and token to players
-                socket.to(client.id).to(opponentId).emit('room created', roomToken, roomId);
+                socket.to(client.id).to(opponentId).emit('room created', roomId, roomToken);
             } else {
                 lobbyUsers.push(client.id);
                 userAdded = true;
@@ -350,11 +350,7 @@ socket.on('connection', function (client) {
 
     //  game handlers
     //  event: roomId, token
-    client.on('join', function () {
-
-        //  Set variable parameters
-        let roomToken = arguments[arguments.length - 1];
-        let roomId = arguments[arguments.length - 2];
+    client.on('join', function (roomId, roomToken) {
 
         if (!typeof roomId == 'string') {
             client.emit("join failed", { message: "invalid arguments" });
@@ -393,6 +389,18 @@ socket.on('connection', function (client) {
                 client.join(roomId);
                 client.emit("game joined as observer", { board: omokGame.board });
             }
+        }
+    });
+
+    client.on('get random room id', function () {
+        let keyList = [];
+        for (let key of gameMap.keys()) {
+            keyList.push(key);
+        }
+        if (keyList.length > 0) {
+            client.emit("random room id", keyList[Math.min(Math.floor(keyList.length * Math.random()), keyList.length)]);
+        } else {
+            client.emit("no random room");
         }
     });
 

@@ -39,13 +39,13 @@ socket.on('connection', function(client){
                     roomId = Math.random().toString(36).substr(2,10);
                 } while (gameMap.has(roomId));
 
-                gameMap.set(roomId,new OmokGame(15));
+                gameMap.set(roomId, new OmokGame(30));
 
                 //  create token
                 let roomToken = jwt.sign({roomId: roomId}, SECRET_KEY);
 
                 //  emit roomId and token to players
-                socket.to(client.id).to(opponentId).emit('room created', roomToken, roomId);
+                socket.to(client.id).to(opponentId).emit('room created', roomId, roomToken);
                 
             } else {
                 lobbyUsers.push(client.id);
@@ -60,11 +60,7 @@ socket.on('connection', function(client){
 
     //  game handlers
     //  event: roomId, token
-    client.on('join', function() {
-
-        //  Set variable parameters
-        let roomToken = arguments[arguments.length - 1];
-        let roomId = arguments[arguments.length - 2];
+    client.on('join', function(roomId, roomToken) {
 
         if (!typeof(roomId)=='string') {
             client.emit("join failed", {message:"invalid arguments"});
@@ -104,6 +100,18 @@ socket.on('connection', function(client){
                 client.join(roomId);
                 client.emit("game joined as observer", {board:omokGame.board});
             }
+        }
+    });
+
+    client.on('get random room id', function() {
+        let keyList = [];
+        for (let key of gameMap.keys()) {
+            keyList.push(key);
+        }
+        if (keyList.length > 0) {
+            client.emit("random room id", keyList[Math.min(Math.floor(keyList.length * Math.random()), keyList.length)]);
+        } else {
+            client.emit("no random room");
         }
     });
 
