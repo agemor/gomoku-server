@@ -1,8 +1,8 @@
 {
   "name": "omok.io-server",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "omok.io server",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack && node ./dist/server.bundle.js"
@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/agemor/omok.io-server.git"
   },
-  "author": "HyunJun Kim",
+  "author": "HyunJun Kim, Minwoo Lee",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/agemor/omok.io-server/issues"
@@ -25,7 +25,6 @@
     "webpack": "^2.5.1"
   },
   "dependencies": {
-    "jsonwebtoken": "^7.4.1",
     "socket.io": "^2.0.1"
   }
 }

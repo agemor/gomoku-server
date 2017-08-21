@@ -1,14 +1,18 @@
+import OmokPlayer from "./OmokPlayer";
 import OmokAlgorithm from './OmokAlgorithm.js';
 import OmokStone from "./OmokStone";
 
 export default class OmokGame {
+
     constructor(boardSize) {
+
         this.algorithm = new OmokAlgorithm();
         this.board = {placement:[], boardSize:boardSize}
-        this.victory = 0;
-        this.playerIds = [];
+        this.victory = "";
+        this.players = [];
         this.currentTurn = OmokStone.BLACK;
     }
+
     placeStone(coord, stoneColor) {
 
         let x = this.fromStringCoordinate(coord).x;
@@ -23,6 +27,10 @@ export default class OmokGame {
         } else {
             throw Error("Invalid move");
         }
+    }
+
+    isGameEnd() {
+        return this.victory != "";
     }
 
     fromStringCoordinate(coord) {
