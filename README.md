@@ -9,50 +9,31 @@ $ npm start
 
 ## Documentation
 
-### Objects
-**Object: Error**
- - `code` Number
- - `message` String
+### *lobby.html*
 
-**Object: ServerResponse**
- - `success` Boolean
+#### Request: `login (nickname)`
+- Response: `login success (player.id, player.key)`
+- Response: `cannot login (error)`
 
-on success 
- - `message` String
- - `data` JSON
 
-otherwise
- - `error` Error object
+#### Request: `find match (player.id, player.key)`
+- Response: `match found (room.id, room.key)`
+- Response: `cannot find match (error)`
 
-### Client-emitted events
-#### *lobby.html*
+#### Request: `get random room`
+- Response: `random room (room.id)`
 
-**Event: 'find opponent'**
- - `callback({success: Boolean, message: String, data: JSON})`
+### *game.html*
 
-#### *game.html*
+#### Request: `join room (player.id, player.key, room.id, room.key)`
+- Response: `room joined ({stoneColor, board, turn})`
+- Response: `cannot join room (error)`
 
-**Event: 'join game'**
- - `roomToken` JsonWebToken
- - `roomId` String
- - `callback(response: ServerResponse)` Function
+#### Request: `observe room (room.id)`
+- Response: `room observed ({players, stoneColors, board, turn})`
+- Response: `cannot observe room (error)`
 
-**Event: 'play move'**
- - `gameToken` JsonWebToken
- - `roomId` String
- - `move` String
- - `callback(response: ServerResponse)` Function
-
-### Server-emitted events
-**Event: 'room created'** `<-` 'find opponent'
- - `roomToken` JsonWebToken: Authenticates user as player of the room
- - `roomId` String: created room id for socket.io room communication
-
-**Event: 'game ready'** `<-` 'join game'
- - `gameToken` JsonWebToken: Authenticates play move
- - `stoneColor` String: stone color of player
-
-**Event: 'stone placed'** `<-` 'play move'
- - `stoneColor` String: "black" or "white"
- - `move` String: coordinates of the stone. Ex.) "i14"
- - `gameEnd` Boolean: true if winning move
+#### Request: `place stone (player.id, player.key, room.id, room.key, coordinate)`
+- Response: `stone placed ({stoneColor, coordinate, gameEnd})`
+- Response: `game over ({win})`
+- Response: `cannot place stone (error)`
