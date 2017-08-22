@@ -108,7 +108,7 @@ socket.on("connection", function(client){
     /**
      * 게임 방 입장하기
      */
-    client.on("join room", function(playerId, playerKey, roomId, roomKey) {
+    client.on("join room", function(roomId, roomKey, playerId, playerKey) {
 
         // 플레이어 인증
         if (!players.authenticate(playerId, playerKey)) {

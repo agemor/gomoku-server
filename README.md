@@ -25,7 +25,7 @@ $ npm start
 
 ### *game.html*
 
-#### Request: `join room (player.id, player.key, room.id, room.key)`
+#### Request: `join room (room.id, room.key, player.id, player.key)`
 - Response: `room joined ({stoneColor, board, turn})`
 - Response: `cannot join room (error)`
 
