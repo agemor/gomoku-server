@@ -19,6 +19,7 @@ var players = new OmokPlayerList();
 
 // 방 목록
 var rooms = new OmokRoomList();
+var observingRoom = null;
 
 // 유저 대기 큐
 var waitingQueue = [];
@@ -171,11 +172,16 @@ socket.on("connection", function(client){
     client.on("observe room", function(roomId) {
         
         if (!rooms.exists(roomId)) {
+
+            observingRoom = null;
+
             client.emit("cannot observe room", {message: "Room does not exist"});
+
             return;
         }
 
         let room = rooms.getById(roomId);
+        observingRoom = room;
 
         room.observers.push(client.id);
 
@@ -291,6 +297,16 @@ socket.on("connection", function(client){
 
         // 접속 절차를 밟지 않은 유저일 경우
         if (player == null) {
+            
+            if (observingRoom != null) {
+
+                let index = observingRoom.observers.indexOf(client.id);
+
+                if (index > -1) {
+                    observingRoom.observers.splice(index, 1);
+                }
+            }
+
             return;
         }
 
