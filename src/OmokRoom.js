@@ -9,15 +9,21 @@ export default class OmokRoom {
         this.id = id;
         this.key = this._generateKey();
 
-        this.game = new OmokGame(30);
+        this.game = new OmokGame(19);
 
         this.players = [];
         this.playerStoneColors = Math.random() > 0.5 ? [OmokStone.BLACK, OmokStone.WHITE] : [OmokStone.WHITE, OmokStone.BLACK];
         this.observers = [];
+
+        this.timer = null;
+        this.paused = false;
     }
 
     close() {
-        for (let i = 0; this.players.length; i++) {
+
+        this.unsetTimer();
+
+        for (let i = 0; i < this.players.length; i++) {
             this.players[i].playingRoom = null;
         }
     }
@@ -37,8 +43,17 @@ export default class OmokRoom {
         }
     }
 
-    startTimer() {
+    setTimer(seconds, callback) {
 
+        this.unsetTimer();
+
+        this.timer = setTimeout(callback, seconds * 1000);
+    }
+
+    unsetTimer() {
+        if (this.timer != null) {
+            clearTimeout(this.timer);
+        }
     }
 
     _generateKey() {

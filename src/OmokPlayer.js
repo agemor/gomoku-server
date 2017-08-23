@@ -7,7 +7,7 @@ export default class OmokPlayer {
         this.nickname = nickname;
         this.socketId = socketId;
 
-        this.playingRoom;
+        this.playingRoom = null;
     }
 
     isConnected() {

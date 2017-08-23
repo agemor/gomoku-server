@@ -1,10 +1,11 @@
-import http from 'http';
-import io from 'socket.io';
-import OmokGame from './OmokGame';
-import OmokPlayer from './OmokPlayer';
-import OmokRoom from './OmokRoom';
-import OmokPlayerList from './OmokPlayerList';
-import OmokRoomList from './OmokRoomList';
+import http from "http";
+import io from "socket.io";
+import OmokGame from "./OmokGame";
+import OmokPlayer from "./OmokPlayer";
+import OmokRoom from "./OmokRoom";
+import OmokStone from "./OmokStone";
+import OmokPlayerList from "./OmokPlayerList";
+import OmokRoomList from "./OmokRoomList";
 
 var port = 5555;
 
@@ -24,12 +25,12 @@ var observingRoom = null;
 // 유저 대기 큐
 var waitingQueue = [];
 
-console.log('Server running at http://127.0.0.1:' + port + '/');
+console.log("Server running at http://127.0.0.1:" + port + "/");
 
 socket.on("connection", function(client){ 
 
     // 새 유저 접속
-    console.log('Connection to client <%s> established', client.id);
+    console.log("Connection to client <%s> established", client.id);
 
     /**
      * 새로운 유저 등록
@@ -45,7 +46,7 @@ socket.on("connection", function(client){
 
         // 인증 정보 전송
         client.emit("login success", player.id, player.key);
-        console.log('User <%s> loggined', player.nickname);
+        console.log("User <%s> loggined", player.nickname);
     });
 
 
@@ -63,16 +64,11 @@ socket.on("connection", function(client){
         let player = players.getById(playerId);
 
         // 접속 상황 관리
-        if (player.isConnected()) {
-            if (player.socketId != client.id) {
-                client.emit("cannot find match", {message: "Duplicated access is not allowed"});
-                return;
-            }
-        } else {
+        if (player.socketId != client.id) {
             player.socketId = client.id;
         }
 
-        if (waitingQueue.indexOf(player) >= 0) {
+        if (waitingQueue.indexOf(player) < 0) {
 
             // 대기 큐에 사람이 있을 경우
             if (waitingQueue.length > 0) {
@@ -117,8 +113,6 @@ socket.on("connection", function(client){
             return;
         }
 
-        // 기존 것과 연결 끊어졌는지 체크 후 소켓 id 갱신
-
         // 방 인증
         if (!rooms.authenticate(roomId, roomKey)) {
             client.emit("cannot join room", {message: "Room authentication failed"});
@@ -127,6 +121,11 @@ socket.on("connection", function(client){
         
         let player = players.getById(playerId);
         let room = rooms.getById(roomId);
+
+        // 연결 갱신
+        if (player.socketId != client.id) {
+            player.socketId = client.id;
+        }
         
         // 신규 접속
         if (room.players.indexOf(player) < 0) {
@@ -146,17 +145,20 @@ socket.on("connection", function(client){
 
                     let stoneColor = (n) => room.playerStoneColors[n];
 
-                    socket.to(room.players[0].socketId).emit('room joined', {
-                        players: [room.players[0].nickname, room.players[1].nickname], 
+                    socket.to(room.players[0].socketId).emit("room joined", {
+                        nicknames: [room.players[0].nickname, room.players[1].nickname],
+                        stoneColors: room.playerStoneColors,
                         stoneColor: stoneColor(0),
-                        turn: stoneColor(0) == OmokStone.BLACK
+                        turn: room.game.currentTurn
                     });
 
-                    socket.to(room.players[1].socketId).emit('room joined', {
-                        players: [room.players[0].nickname, room.players[1].nickname],
+                    socket.to(room.players[1].socketId).emit("room joined", {
+                        nicknames: [room.players[0].nickname, room.players[1].nickname],
+                        stoneColors: room.playerStoneColors,
                         stoneColor: stoneColor(1),
-                        turn: stoneColor(1) == OmokStone.BLACK
+                        turn: room.game.currentTurn
                     });
+
                     console.log("Game <%s> started.", roomId);
                 }
             }
@@ -167,9 +169,18 @@ socket.on("connection", function(client){
             
             // 기존 게임 데이터 전송
             let stoneColor = room.playerStoneColors[room.players.indexOf(player)];
-            let isMyTurn = room.game.currentTurn == stoneColor;
 
-            socket.to(player.socketId).emit('room joined', {stoneColor: stoneColor, board:room.game.board, turn: isMyTurn});
+            socket.to(player.socketId).emit("room joined", {
+                nicknames: [room.players[0].nickname, room.players[1].nickname],
+                stoneColors: room.playerStoneColors,
+                stoneColor: stoneColor,
+                turn: room.game.currentTurn,
+                board: room.game.board
+            });
+
+            room.paused = false;
+            room.broadcast(socket, "player reconnected", player.nickname);
+
             console.log("Game <%s> resumed.", roomId);
         }
     });
@@ -195,8 +206,8 @@ socket.on("connection", function(client){
         room.observers.push(client.id);
 
         // 기존 게임 데이터 전송
-        socket.to(player.socketId).emit('room observed', {
-            players: [room.players[0].nickname, room.players[1].nickname], 
+        socket.to(player.socketId).emit("room observed", {
+            nicknames: [room.players[0].nickname, room.players[1].nickname], 
             stoneColors: room.playerStoneColors,
             turn: room.game.currentTurn,
             board: room.game.board
@@ -207,15 +218,22 @@ socket.on("connection", function(client){
     /**
      * 랜덤한 방 얻기
      */
-    client.on('get random room', function() {
+    client.on("get random room", function() {
         client.emit("random room", rooms.pickRandomId());
     });
 
 
+    client.on("hi server", function() {
+        console.log("client says hi");
+        client.emit("hi client");
+    });
+
     /**
      * 돌 놓기
      */
-    client.on('place stone', function(roomId, roomKey, playerId, playerKey, coord) {
+    client.on("place stone", function(roomId, roomKey, playerId, playerKey, coord) {
+
+        console.log(coord);
 
         // 플레이어 인증
         if (!players.authenticate(playerId, playerKey)) {
@@ -237,9 +255,15 @@ socket.on("connection", function(client){
             return;
         }
 
+        if (room.paused) {
+            client.emit("cannot place stone", {message: "Room paused"});
+            return;
+        }
+
         // 게임이 끝났을 경우
         if (room.game.isGameEnd()) {
             client.emit("cannot place stone", {message: "Game over"});
+            return;
         }
 
         let playerStoneColor = room.playerStoneColors[room.players.indexOf(player)];
@@ -250,8 +274,8 @@ socket.on("connection", function(client){
                 
                 // 돌 놓기
                 room.game.placeStone(coord, playerStoneColor);
-
-                room.broadcast(socket, 'stone placed', {
+                console.log(player.nickname + " do " + coord);
+                room.broadcast(socket, "stone placed", {
                     stoneColor: playerStoneColor,
                     coord: coord
                 });
@@ -259,27 +283,32 @@ socket.on("connection", function(client){
                 // 게임이 끝났다면
                 if (room.game.isGameEnd()) {
 
-                    room.broadcast(socket, 'game over', {win: playerStoneColor});
+                    room.broadcast(socket, "game over", {win: playerStoneColor});
 
                     // 방 삭제
                     rooms.remove(room.id);
+
+                    console.log("Game <%s> ended. (Game over)", room.id);
+
                     return;
                 }
 
                 // 타임아웃 설정 (1분)
-                setTimeout(function(room, player) {
+
+                room.setTimer(30, () => {
 
                     if (!room.game.isGameEnd()) {
 
                         let stoneColor = room.playerStoneColors[room.players.indexOf(player)];
 
-                        room.broadcast(socket, 'game over', {win: stoneColor});
+                        room.broadcast(socket, "game over", {win: stoneColor});
                 
                         // 방 삭제
                         rooms.remove(room.id);
-                    }
 
-                }, 60 * 1000, room, player);
+                        console.log("Game <%s> ended. (Timeout)", room.id);
+                    }
+                });
 
             } catch (error) {
                 client.emit("cannot place stone", {message: "Invalid stone coordinate"});
@@ -296,13 +325,11 @@ socket.on("connection", function(client){
     /**
      * 클라이언트와의 연결이 끊겼을 경우
      */
-    client.on('disconnect', function() {
+    client.on("disconnect", function() {
+
+        console.log("Connection to client <%s> disconnected", client.id);
 
         let player = players.getBySocketId(client.id);
-        let room = player.playingRoom;
-
-        // 접속 정보 말소
-        player.socketId = "";
 
         // 접속 절차를 밟지 않은 유저일 경우
         if (player == null) {
@@ -319,6 +346,11 @@ socket.on("connection", function(client){
             return;
         }
 
+        let room = player.playingRoom;
+
+        // 접속 정보 말소
+        player.socketId = "";
+
         // 대기 큐애서 삭제
         var index = waitingQueue.indexOf(player);
         if (index > -1) {
@@ -328,24 +360,41 @@ socket.on("connection", function(client){
         // 현재 게임 중이라면, 방에 통보
         if (room != null) {
 
-            room.broadcast(socket, 'player disconnected', player.nickname);
+            // 만약 남은 다른 유저도 나간 상태라면
+            if (room.players[0].socketId == "" && room.players[1].socketId == "") {
 
-            // 게임 종료 타이머 시작
-            setTimeout(function(room, player) {
-
-                if (!player.isConnected()) {
-
-                    let stoneColor = room.playerStoneColors[room.players.indexOf(player)];
-
-                    room.broadcast(socket, 'game over', {win: stoneColor == OmokStone.BLACK ? OmokStone.WHITE : OmokStone.BLACK});
+                room.broadcast(socket, "game over", {win: OmokStone.BLACK});
                
-                    // 방 삭제
-                    rooms.remove(room.id);
-                }
+                // 방 삭제
+                rooms.remove(room.id);
 
-            }, 15 * 1000, room, player);
+                console.log("Game <%s> ended. (Both players left)", room.id);
+            }
+
+            else {
+
+                room.broadcast(socket, "player disconnected", player.nickname);
+
+                room.paused = true;
+
+                // 게임 종료 타이머 시작
+                room.setTimer(15, () => {
+
+                    if (!player.isConnected()) {
+
+                        let stoneColor = room.playerStoneColors[room.players.indexOf(player)];
+
+                        room.broadcast(socket, "game over", {win: stoneColor == OmokStone.BLACK ? OmokStone.WHITE : OmokStone.BLACK});
+                
+                        // 방 삭제
+                        rooms.remove(room.id);
+
+                        console.log("Game <%s> ended. (One player left)", room.id);
+                    }
+                });
+            }
         }
 
-        console.log('Player <%s> has left', player.nickname);
+        console.log("Player <%s> has left", player.nickname);
     });
 });

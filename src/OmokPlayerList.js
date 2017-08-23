@@ -4,22 +4,20 @@ export default class OmokPlayerList {
 
     constructor() {
         this.playerIdMap = new Map();
-        this.playerSocketIdMap = new Map();
         this.playerList = [];
     }
 
     register(nickname, socketId) {
         let player = new OmokPlayer(this._generateUid(), nickname, socketId);
         this.playerIdMap.set(player.id, player);
-        this.playerSocketIdMap.set(socketId, player);
+        this.playerList.push(player);
         return player;
     }
 
     remove(playerId) {
         let player = this.getById(playerId);
-        this.playerList.splice(playerList.indexOf(player), 1);
+        this.playerList.splice(this.playerList.indexOf(player), 1);
         this.playerIdMap.delete(player.id);
-        this.playerSocketIdMap.delete(player.socketId);
     }
 
     authenticate(playerId, playerKey) {
@@ -36,14 +34,21 @@ export default class OmokPlayerList {
     }
 
     getBySocketId(socketId) {
-        return this.playerSocketIdMap.get(socketId);
+
+        for (let i = 0; i < this.playerList.length; i++) {
+            if (this.playerList[i].socketId == socketId) {
+                return this.playerList[i];
+            }
+        }
+
+        return null;
     }
 
     _generateUid() {
         let uid;
         do {
             uid = Math.random().toString(36).substr(2,10);
-        } while (playerIdMap.has(uid));
+        } while (this.playerIdMap.has(uid));
         return uid;
     }
 }

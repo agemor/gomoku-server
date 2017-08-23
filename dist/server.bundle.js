@@ -71,6 +71,18 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+class OmokStone {}
+/* harmony export (immutable) */ __webpack_exports__["a"] = OmokStone;
+
+
+OmokStone.BLACK = "black";
+OmokStone.WHITE = "white";
+
+/***/ }),
+/* 1 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 class OmokPlayer {
 
     constructor(id, nickname, socketId) {
@@ -80,7 +92,7 @@ class OmokPlayer {
         this.nickname = nickname;
         this.socketId = socketId;
 
-        this.playingRoom;
+        this.playingRoom = null;
     }
 
     isConnected() {
@@ -95,25 +107,13 @@ class OmokPlayer {
 
 
 /***/ }),
-/* 1 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-class OmokStone {}
-/* harmony export (immutable) */ __webpack_exports__["a"] = OmokStone;
-
-
-OmokStone.BLACK = "black";
-OmokStone.WHITE = "white";
-
-/***/ }),
 /* 2 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OmokPlayer__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OmokPlayer__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__OmokAlgorithm_js__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__OmokStone__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__OmokStone__ = __webpack_require__(0);
 
 
 
@@ -164,7 +164,7 @@ class OmokGame {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_socket_io__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_socket_io___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_socket_io__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__OmokGame__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__OmokStone__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__OmokStone__ = __webpack_require__(0);
 
 
 
@@ -176,15 +176,21 @@ class OmokRoom {
         this.id = id;
         this.key = this._generateKey();
 
-        this.game = new __WEBPACK_IMPORTED_MODULE_1__OmokGame__["a" /* default */](30);
+        this.game = new __WEBPACK_IMPORTED_MODULE_1__OmokGame__["a" /* default */](19);
 
         this.players = [];
         this.playerStoneColors = Math.random() > 0.5 ? [__WEBPACK_IMPORTED_MODULE_2__OmokStone__["a" /* default */].BLACK, __WEBPACK_IMPORTED_MODULE_2__OmokStone__["a" /* default */].WHITE] : [__WEBPACK_IMPORTED_MODULE_2__OmokStone__["a" /* default */].WHITE, __WEBPACK_IMPORTED_MODULE_2__OmokStone__["a" /* default */].BLACK];
         this.observers = [];
+
+        this.timer = null;
+        this.paused = false;
     }
 
     close() {
-        for (let i = 0; this.players.length; i++) {
+
+        this.unsetTimer();
+
+        for (let i = 0; i < this.players.length; i++) {
             this.players[i].playingRoom = null;
         }
     }
@@ -204,7 +210,18 @@ class OmokRoom {
         }
     }
 
-    startTimer() {}
+    setTimer(seconds, callback) {
+
+        this.unsetTimer();
+
+        this.timer = setTimeout(callback, seconds * 1000);
+    }
+
+    unsetTimer() {
+        if (this.timer != null) {
+            clearTimeout(this.timer);
+        }
+    }
 
     _generateKey() {
         return Math.random().toString(36).substr(2, 10);
@@ -224,29 +241,27 @@ module.exports = require("socket.io");
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OmokPlayer__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OmokPlayer__ = __webpack_require__(1);
 
 
 class OmokPlayerList {
 
     constructor() {
         this.playerIdMap = new Map();
-        this.playerSocketIdMap = new Map();
         this.playerList = [];
     }
 
     register(nickname, socketId) {
         let player = new __WEBPACK_IMPORTED_MODULE_0__OmokPlayer__["a" /* default */](this._generateUid(), nickname, socketId);
         this.playerIdMap.set(player.id, player);
-        this.playerSocketIdMap.set(socketId, player);
+        this.playerList.push(player);
         return player;
     }
 
     remove(playerId) {
         let player = this.getById(playerId);
-        this.playerList.splice(playerList.indexOf(player), 1);
+        this.playerList.splice(this.playerList.indexOf(player), 1);
         this.playerIdMap.delete(player.id);
-        this.playerSocketIdMap.delete(player.socketId);
     }
 
     authenticate(playerId, playerKey) {
@@ -263,14 +278,21 @@ class OmokPlayerList {
     }
 
     getBySocketId(socketId) {
-        return this.playerSocketIdMap.get(socketId);
+
+        for (let i = 0; i < this.playerList.length; i++) {
+            if (this.playerList[i].socketId == socketId) {
+                return this.playerList[i];
+            }
+        }
+
+        return null;
     }
 
     _generateUid() {
         let uid;
         do {
             uid = Math.random().toString(36).substr(2, 10);
-        } while (playerIdMap.has(uid));
+        } while (this.playerIdMap.has(uid));
         return uid;
     }
 }
@@ -294,16 +316,21 @@ class OmokRoomList {
 
     create() {
         let room = new __WEBPACK_IMPORTED_MODULE_0__OmokRoom__["a" /* default */](this._generateUid());
-        this.roomIdMap.set(room.roomId, room);
+        this.roomIdMap.set(room.id, room);
         return room;
     }
 
     remove(roomId) {
-        let room = this.getById(roomId);
-        room.close();
 
-        this.roomList.splice(roomList.indexOf(room), 1);
-        this.roomIdMap.delete(room.id);
+        let room = this.getById(roomId);
+
+        if (room != null) {
+
+            room.close();
+
+            this.roomList.splice(this.roomList.indexOf(room), 1);
+            this.roomIdMap.delete(room.id);
+        }
     }
 
     authenticate(roomId, roomKey) {
@@ -321,7 +348,7 @@ class OmokRoomList {
 
     pickRandomId() {
         let keyList = [];
-        for (let key of roomIdMap.keys()) {
+        for (let key of this.roomIdMap.keys()) {
             keyList.push(key);
         }
         if (keyList.length > 0) {
@@ -339,7 +366,7 @@ class OmokRoomList {
         let uid;
         do {
             uid = Math.random().toString(36).substr(2, 10);
-        } while (roomIdMap.has(uid));
+        } while (this.roomIdMap.has(uid));
         return uid;
     }
 }
@@ -357,7 +384,7 @@ module.exports = require("http");
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OmokStone__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__OmokStone__ = __webpack_require__(0);
 
 
 class OmokAlgorithm {
@@ -502,10 +529,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_socket_io__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_socket_io___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_socket_io__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__OmokGame__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__OmokPlayer__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__OmokPlayer__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__OmokRoom__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__OmokPlayerList__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__OmokRoomList__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__OmokStone__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__OmokPlayerList__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__OmokRoomList__ = __webpack_require__(6);
+
 
 
 
@@ -523,20 +552,21 @@ server.listen(port);
 var socket = __WEBPACK_IMPORTED_MODULE_1_socket_io___default.a.listen(server);
 
 // 유저 목록
-var players = new __WEBPACK_IMPORTED_MODULE_5__OmokPlayerList__["a" /* default */]();
+var players = new __WEBPACK_IMPORTED_MODULE_6__OmokPlayerList__["a" /* default */]();
 
 // 방 목록
-var rooms = new __WEBPACK_IMPORTED_MODULE_6__OmokRoomList__["a" /* default */]();
+var rooms = new __WEBPACK_IMPORTED_MODULE_7__OmokRoomList__["a" /* default */]();
+var observingRoom = null;
 
 // 유저 대기 큐
 var waitingQueue = [];
 
-console.log('Server running at http://127.0.0.1:' + port + '/');
+console.log("Server running at http://127.0.0.1:" + port + "/");
 
 socket.on("connection", function (client) {
 
     // 새 유저 접속
-    console.log('Connection to client <%s> established', client.id);
+    console.log("Connection to client <%s> established", client.id);
 
     /**
      * 새로운 유저 등록
@@ -552,7 +582,7 @@ socket.on("connection", function (client) {
 
         // 인증 정보 전송
         client.emit("login success", player.id, player.key);
-        console.log('User <%s> loggined', player.nickname);
+        console.log("User <%s> loggined", player.nickname);
     });
 
     /**
@@ -569,16 +599,11 @@ socket.on("connection", function (client) {
         let player = players.getById(playerId);
 
         // 접속 상황 관리
-        if (player.isConnected()) {
-            if (player.socketId != client.id) {
-                client.emit("cannot find match", { message: "Duplicated access is not allowed" });
-                return;
-            }
-        } else {
+        if (player.socketId != client.id) {
             player.socketId = client.id;
         }
 
-        if (waitingQueue.indexOf(player) >= 0) {
+        if (waitingQueue.indexOf(player) < 0) {
 
             // 대기 큐에 사람이 있을 경우
             if (waitingQueue.length > 0) {
@@ -614,15 +639,13 @@ socket.on("connection", function (client) {
     /**
      * 게임 방 입장하기
      */
-    client.on("join room", function (playerId, playerKey, roomId, roomKey) {
+    client.on("join room", function (roomId, roomKey, playerId, playerKey) {
 
         // 플레이어 인증
         if (!players.authenticate(playerId, playerKey)) {
             client.emit("cannot join room", { message: "User authentication failed" });
             return;
         }
-
-        // 기존 것과 연결 끊어졌는지 체크 후 소켓 id 갱신
 
         // 방 인증
         if (!rooms.authenticate(roomId, roomKey)) {
@@ -632,6 +655,11 @@ socket.on("connection", function (client) {
 
         let player = players.getById(playerId);
         let room = rooms.getById(roomId);
+
+        // 연결 갱신
+        if (player.socketId != client.id) {
+            player.socketId = client.id;
+        }
 
         // 신규 접속
         if (room.players.indexOf(player) < 0) {
@@ -649,8 +677,20 @@ socket.on("connection", function (client) {
 
                     let stoneColor = n => room.playerStoneColors[n];
 
-                    socket.to(room.players[0].socketId).emit('room joined', { stoneColor: stoneColor(0), turn: stoneColor(0) == OmokStone.BLACK });
-                    socket.to(room.players[1].socketId).emit('room joined', { stoneColor: stoneColor(1), turn: stoneColor(1) == OmokStone.BLACK });
+                    socket.to(room.players[0].socketId).emit("room joined", {
+                        nicknames: [room.players[0].nickname, room.players[1].nickname],
+                        stoneColors: room.playerStoneColors,
+                        stoneColor: stoneColor(0),
+                        turn: room.game.currentTurn
+                    });
+
+                    socket.to(room.players[1].socketId).emit("room joined", {
+                        nicknames: [room.players[0].nickname, room.players[1].nickname],
+                        stoneColors: room.playerStoneColors,
+                        stoneColor: stoneColor(1),
+                        turn: room.game.currentTurn
+                    });
+
                     console.log("Game <%s> started.", roomId);
                 }
             }
@@ -661,9 +701,18 @@ socket.on("connection", function (client) {
 
                 // 기존 게임 데이터 전송
                 let stoneColor = room.playerStoneColors[room.players.indexOf(player)];
-                let isMyTurn = room.game.currentTurn == stoneColor;
 
-                socket.to(player.socketId).emit('room joined', { stoneColor: stoneColor, board: room.game.board, turn: isMyTurn });
+                socket.to(player.socketId).emit("room joined", {
+                    nicknames: [room.players[0].nickname, room.players[1].nickname],
+                    stoneColors: room.playerStoneColors,
+                    stoneColor: stoneColor,
+                    turn: room.game.currentTurn,
+                    board: room.game.board
+                });
+
+                room.paused = false;
+                room.broadcast(socket, "player reconnected", player.nickname);
+
                 console.log("Game <%s> resumed.", roomId);
             }
     });
@@ -674,17 +723,22 @@ socket.on("connection", function (client) {
     client.on("observe room", function (roomId) {
 
         if (!rooms.exists(roomId)) {
+
+            observingRoom = null;
+
             client.emit("cannot observe room", { message: "Room does not exist" });
+
             return;
         }
 
         let room = rooms.getById(roomId);
+        observingRoom = room;
 
         room.observers.push(client.id);
 
         // 기존 게임 데이터 전송
-        socket.to(player.socketId).emit('room observed', {
-            players: [room.players[0].nickname, room.players[1].nickname],
+        socket.to(player.socketId).emit("room observed", {
+            nicknames: [room.players[0].nickname, room.players[1].nickname],
             stoneColors: room.playerStoneColors,
             turn: room.game.currentTurn,
             board: room.game.board
@@ -694,14 +748,21 @@ socket.on("connection", function (client) {
     /**
      * 랜덤한 방 얻기
      */
-    client.on('get random room', function () {
+    client.on("get random room", function () {
         client.emit("random room", rooms.pickRandomId());
+    });
+
+    client.on("hi server", function () {
+        console.log("client says hi");
+        client.emit("hi client");
     });
 
     /**
      * 돌 놓기
      */
-    client.on('place stone', function (playerId, playerKey, roomId, roomKey, coord) {
+    client.on("place stone", function (roomId, roomKey, playerId, playerKey, coord) {
+
+        console.log(coord);
 
         // 플레이어 인증
         if (!players.authenticate(playerId, playerKey)) {
@@ -723,9 +784,15 @@ socket.on("connection", function (client) {
             return;
         }
 
+        if (room.paused) {
+            client.emit("cannot place stone", { message: "Room paused" });
+            return;
+        }
+
         // 게임이 끝났을 경우
         if (room.game.isGameEnd()) {
             client.emit("cannot place stone", { message: "Game over" });
+            return;
         }
 
         let playerStoneColor = room.playerStoneColors[room.players.indexOf(player)];
@@ -736,34 +803,41 @@ socket.on("connection", function (client) {
 
                 // 돌 놓기
                 room.game.placeStone(coord, playerStoneColor);
-
-                room.broadcast(socket, 'stone placed', {
+                console.log(player.nickname + " do " + coord);
+                room.broadcast(socket, "stone placed", {
                     stoneColor: playerStoneColor,
-                    coord: coord,
-                    gameEnd: room.game.isGameEnd()
+                    coord: coord
                 });
 
                 // 게임이 끝났다면
                 if (room.game.isGameEnd()) {
 
+                    room.broadcast(socket, "game over", { win: playerStoneColor });
+
                     // 방 삭제
                     rooms.remove(room.id);
+
+                    console.log("Game <%s> ended. (Game over)", room.id);
+
                     return;
                 }
 
                 // 타임아웃 설정 (1분)
-                setTimeout(function (room, player) {
+
+                room.setTimer(30, () => {
 
                     if (!room.game.isGameEnd()) {
 
                         let stoneColor = room.playerStoneColors[room.players.indexOf(player)];
 
-                        room.broadcast(socket, 'game over', { win: stoneColor });
+                        room.broadcast(socket, "game over", { win: stoneColor });
 
                         // 방 삭제
                         rooms.remove(room.id);
+
+                        console.log("Game <%s> ended. (Timeout)", room.id);
                     }
-                }, 60 * 1000, room, player);
+                });
             } catch (error) {
                 client.emit("cannot place stone", { message: "Invalid stone coordinate" });
             }
@@ -778,18 +852,31 @@ socket.on("connection", function (client) {
     /**
      * 클라이언트와의 연결이 끊겼을 경우
      */
-    client.on('disconnect', function () {
+    client.on("disconnect", function () {
+
+        console.log("Connection to client <%s> disconnected", client.id);
 
         let player = players.getBySocketId(client.id);
+
+        // 접속 절차를 밟지 않은 유저일 경우
+        if (player == null) {
+
+            if (observingRoom != null) {
+
+                let index = observingRoom.observers.indexOf(client.id);
+
+                if (index > -1) {
+                    observingRoom.observers.splice(index, 1);
+                }
+            }
+
+            return;
+        }
+
         let room = player.playingRoom;
 
         // 접속 정보 말소
         player.socketId = "";
-
-        // 접속 절차를 밟지 않은 유저일 경우
-        if (player == null) {
-            return;
-        }
 
         // 대기 큐애서 삭제
         var index = waitingQueue.indexOf(player);
@@ -800,24 +887,40 @@ socket.on("connection", function (client) {
         // 현재 게임 중이라면, 방에 통보
         if (room != null) {
 
-            room.broadcast(socket, 'player disconnected', player.nickname);
+            // 만약 남은 다른 유저도 나간 상태라면
+            if (room.players[0].socketId == "" && room.players[1].socketId == "") {
 
-            // 게임 종료 타이머 시작
-            setTimeout(function (room, player) {
+                room.broadcast(socket, "game over", { win: __WEBPACK_IMPORTED_MODULE_5__OmokStone__["a" /* default */].BLACK });
 
-                if (!player.isConnected()) {
+                // 방 삭제
+                rooms.remove(room.id);
 
-                    let stoneColor = room.playerStoneColors[room.players.indexOf(player)];
+                console.log("Game <%s> ended. (Both players left)", room.id);
+            } else {
 
-                    room.broadcast(socket, 'game over', { win: stoneColor == OmokStone.BLACK ? OmokStone.WHITE : OmokStone.BLACK });
+                room.broadcast(socket, "player disconnected", player.nickname);
 
-                    // 방 삭제
-                    rooms.remove(room.id);
-                }
-            }, 15 * 1000, room, player);
+                room.paused = true;
+
+                // 게임 종료 타이머 시작
+                room.setTimer(15, () => {
+
+                    if (!player.isConnected()) {
+
+                        let stoneColor = room.playerStoneColors[room.players.indexOf(player)];
+
+                        room.broadcast(socket, "game over", { win: stoneColor == __WEBPACK_IMPORTED_MODULE_5__OmokStone__["a" /* default */].BLACK ? __WEBPACK_IMPORTED_MODULE_5__OmokStone__["a" /* default */].WHITE : __WEBPACK_IMPORTED_MODULE_5__OmokStone__["a" /* default */].BLACK });
+
+                        // 방 삭제
+                        rooms.remove(room.id);
+
+                        console.log("Game <%s> ended. (One player left)", room.id);
+                    }
+                });
+            }
         }
 
-        console.log('Player <%s> has left', player.nickname);
+        console.log("Player <%s> has left", player.nickname);
     });
 });
 

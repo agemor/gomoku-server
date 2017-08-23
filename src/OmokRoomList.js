@@ -9,16 +9,21 @@ export default class OmokRoomList {
 
     create() {
         let room = new OmokRoom(this._generateUid());
-        this.roomIdMap.set(room.roomId, room);
+        this.roomIdMap.set(room.id, room);
         return room;
     }
 
     remove(roomId) {
+        
         let room = this.getById(roomId);
-        room.close();
 
-        this.roomList.splice(roomList.indexOf(room), 1);
-        this.roomIdMap.delete(room.id);
+        if (room != null) {
+
+            room.close();
+
+            this.roomList.splice(this.roomList.indexOf(room), 1);
+            this.roomIdMap.delete(room.id);
+        }
     }
 
     authenticate(roomId, roomKey) {
@@ -36,7 +41,7 @@ export default class OmokRoomList {
 
     pickRandomId() {
         let keyList = [];
-        for (let key of roomIdMap.keys()) {
+        for (let key of this.roomIdMap.keys()) {
             keyList.push(key);
         }
         if (keyList.length > 0) {
@@ -54,7 +59,7 @@ export default class OmokRoomList {
         let uid;
         do {
             uid = Math.random().toString(36).substr(2,10);
-        } while (roomIdMap.has(uid));
+        } while (this.roomIdMap.has(uid));
         return uid;
     }
 }
