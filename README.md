@@ -33,7 +33,7 @@ $ npm start
 - Response: `room observed ({players, stoneColors, board, turn})`
 - Response: `cannot observe room (error)`
 
-#### Request: `place stone (player.id, player.key, room.id, room.key, coordinate)`
-- Response: `stone placed ({stoneColor, coordinate, gameEnd})`
+#### Request: `place stone (room.id, room.key, player.id, player.key, coordinate)`
+- Response: `stone placed ({stoneColor, coordinate})`
 - Response: `game over ({win})`
 - Response: `cannot place stone (error)`

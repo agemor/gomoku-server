@@ -200,7 +200,7 @@ socket.on("connection", function(client){
     /**
      * 돌 놓기
      */
-    client.on('place stone', function(playerId, playerKey, roomId, roomKey, coord) {
+    client.on('place stone', function(roomId, roomKey, playerId, playerKey, coord) {
 
         // 플레이어 인증
         if (!players.authenticate(playerId, playerKey)) {
@@ -238,12 +238,13 @@ socket.on("connection", function(client){
 
                 room.broadcast(socket, 'stone placed', {
                     stoneColor: playerStoneColor,
-                    coord: coord,
-                    gameEnd: room.game.isGameEnd()
+                    coord: coord
                 });
 
                 // 게임이 끝났다면
                 if (room.game.isGameEnd()) {
+
+                    room.broadcast(socket, 'game over', {win: playerStoneColor});
 
                     // 방 삭제
                     rooms.remove(room.id);
