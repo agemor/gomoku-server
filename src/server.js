@@ -146,8 +146,17 @@ socket.on("connection", function(client){
 
                     let stoneColor = (n) => room.playerStoneColors[n];
 
-                    socket.to(room.players[0].socketId).emit('room joined', {stoneColor: stoneColor(0), turn: stoneColor(0) == OmokStone.BLACK});
-                    socket.to(room.players[1].socketId).emit('room joined', {stoneColor: stoneColor(1), turn: stoneColor(1) == OmokStone.BLACK});
+                    socket.to(room.players[0].socketId).emit('room joined', {
+                        players: [room.players[0].nickname, room.players[1].nickname], 
+                        stoneColor: stoneColor(0),
+                        turn: stoneColor(0) == OmokStone.BLACK
+                    });
+
+                    socket.to(room.players[1].socketId).emit('room joined', {
+                        players: [room.players[0].nickname, room.players[1].nickname],
+                        stoneColor: stoneColor(1),
+                        turn: stoneColor(1) == OmokStone.BLACK
+                    });
                     console.log("Game <%s> started.", roomId);
                 }
             }
