@@ -30,7 +30,7 @@ export default class OmokRoom {
 
     broadcast(socket, message, dataObject) {
         
-        let send = (target) => socket.in(target).emit('stone placed', dataObject);
+        let send = (target) => socket.to(target).emit(message, dataObject);
 
         // 플레이어에게 
         for (let i = 0; i < this.players.length; i++) {

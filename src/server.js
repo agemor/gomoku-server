@@ -46,6 +46,7 @@ socket.on("connection", function(client){
 
         // 인증 정보 전송
         client.emit("login success", player.id, player.key);
+        
         console.log("User <%s> loggined", player.nickname);
     });
 
@@ -222,18 +223,10 @@ socket.on("connection", function(client){
         client.emit("random room", rooms.pickRandomId());
     });
 
-
-    client.on("hi server", function() {
-        console.log("client says hi");
-        client.emit("hi client");
-    });
-
     /**
      * 돌 놓기
      */
     client.on("place stone", function(roomId, roomKey, playerId, playerKey, coord) {
-
-        console.log(coord);
 
         // 플레이어 인증
         if (!players.authenticate(playerId, playerKey)) {
@@ -274,7 +267,7 @@ socket.on("connection", function(client){
                 
                 // 돌 놓기
                 room.game.placeStone(coord, playerStoneColor);
-                console.log(player.nickname + " do " + coord);
+
                 room.broadcast(socket, "stone placed", {
                     stoneColor: playerStoneColor,
                     coord: coord
