@@ -134,6 +134,10 @@ class OmokGame {
         let x = this.fromStringCoordinate(coord).x;
         let y = this.fromStringCoordinate(coord).y;
 
+        if (this.board.placement[y * this.board.boardSize + x] != null) {
+            throw Error("Invalid placement");
+        }
+
         if (this.algorithm.checkValidity(x, y, stoneColor, this.board)) {
             if (this.algorithm.checkVictory(x, y, stoneColor, this.board)) {
                 this.victory = stoneColor;
@@ -141,7 +145,7 @@ class OmokGame {
             this.board.placement[y * this.board.boardSize + x] = stoneColor == __WEBPACK_IMPORTED_MODULE_2__OmokStone__["a" /* default */].BLACK ? 1 : 2;
             this.currentTurn = this.currentTurn == __WEBPACK_IMPORTED_MODULE_2__OmokStone__["a" /* default */].BLACK ? __WEBPACK_IMPORTED_MODULE_2__OmokStone__["a" /* default */].WHITE : __WEBPACK_IMPORTED_MODULE_2__OmokStone__["a" /* default */].BLACK;
         } else {
-            throw Error("Invalid move");
+            throw Error("Invalid placement");
         }
     }
 
@@ -561,6 +565,10 @@ var observingRoom = null;
 // 유저 대기 큐
 var waitingQueue = [];
 
+// 타임아웃 설정
+var PLAY_TIMEOUT = 200;
+var RECONNECT_TIMEOUT = 400;
+
 console.log("Server running at http://127.0.0.1:" + port + "/");
 
 socket.on("connection", function (client) {
@@ -668,6 +676,7 @@ socket.on("connection", function (client) {
             // 초과 접속 시도
             if (room.players.length >= 2) {
                 client.emit("cannot join room", { message: "Exceeded maximum number of players" });
+                return;
             } else {
 
                 room.players.push(player);
@@ -716,6 +725,22 @@ socket.on("connection", function (client) {
 
                 console.log("Game <%s> resumed.", roomId);
             }
+
+        // 타임아웃 설정 (1분)
+        room.setTimer(PLAY_TIMEOUT, () => {
+
+            if (!room.game.isGameEnd()) {
+
+                let stoneColor = room.playerStoneColors[room.players.indexOf(player)];
+
+                room.broadcast(socket, "game over", { win: stoneColor });
+
+                // 방 삭제
+                rooms.remove(room.id);
+
+                console.log("Game <%s> ended. (Timeout)", room.id);
+            }
+        });
     });
 
     /**
@@ -738,7 +763,7 @@ socket.on("connection", function (client) {
         room.observers.push(client.id);
 
         // 기존 게임 데이터 전송
-        socket.to(player.socketId).emit("room observed", {
+        client.emit("room observed", {
             nicknames: [room.players[0].nickname, room.players[1].nickname],
             stoneColors: room.playerStoneColors,
             turn: room.game.currentTurn,
@@ -817,8 +842,7 @@ socket.on("connection", function (client) {
                 }
 
                 // 타임아웃 설정 (1분)
-
-                room.setTimer(30, () => {
+                room.setTimer(PLAY_TIMEOUT, () => {
 
                     if (!room.game.isGameEnd()) {
 
@@ -897,7 +921,7 @@ socket.on("connection", function (client) {
                 room.paused = true;
 
                 // 게임 종료 타이머 시작
-                room.setTimer(15, () => {
+                room.setTimer(RECONNECT_TIMEOUT, () => {
 
                     if (!player.isConnected()) {
 

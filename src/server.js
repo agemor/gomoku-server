@@ -25,6 +25,10 @@ var observingRoom = null;
 // 유저 대기 큐
 var waitingQueue = [];
 
+// 타임아웃 설정
+var PLAY_TIMEOUT = 30;
+var RECONNECT_TIMEOUT = 15;
+
 console.log("Server running at http://127.0.0.1:" + port + "/");
 
 socket.on("connection", function(client){ 
@@ -187,7 +191,7 @@ socket.on("connection", function(client){
         }
 
         // 타임아웃 설정 (1분)
-        room.setTimer(30, () => {
+        room.setTimer(PLAY_TIMEOUT, () => {
 
             if (!room.game.isGameEnd()) {
 
@@ -225,7 +229,7 @@ socket.on("connection", function(client){
         room.observers.push(client.id);
 
         // 기존 게임 데이터 전송
-        socket.to(player.socketId).emit("room observed", {
+        client.emit("room observed", {
             nicknames: [room.players[0].nickname, room.players[1].nickname], 
             stoneColors: room.playerStoneColors,
             turn: room.game.currentTurn,
@@ -305,7 +309,7 @@ socket.on("connection", function(client){
                 }
 
                 // 타임아웃 설정 (1분)
-                room.setTimer(30, () => {
+                room.setTimer(PLAY_TIMEOUT, () => {
 
                     if (!room.game.isGameEnd()) {
 
@@ -388,7 +392,7 @@ socket.on("connection", function(client){
                 room.paused = true;
 
                 // 게임 종료 타이머 시작
-                room.setTimer(15, () => {
+                room.setTimer(RECONNECT_TIMEOUT, () => {
 
                     if (!player.isConnected()) {
 
