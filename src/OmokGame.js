@@ -18,6 +18,10 @@ export default class OmokGame {
         let x = this.fromStringCoordinate(coord).x;
         let y = this.fromStringCoordinate(coord).y;
 
+        if (this.board.placement[y * this.board.boardSize + x] != null) {
+            throw Error("Invalid placement");
+        }
+
         if (this.algorithm.checkValidity(x, y, stoneColor, this.board)) {
             if (this.algorithm.checkVictory(x, y, stoneColor, this.board)) {
                 this.victory = stoneColor;
@@ -25,7 +29,7 @@ export default class OmokGame {
             this.board.placement[y * this.board.boardSize + x] = (stoneColor == OmokStone.BLACK ? 1 : 2);
             this.currentTurn = this.currentTurn == OmokStone.BLACK ? OmokStone.WHITE : OmokStone.BLACK;
         } else {
-            throw Error("Invalid move");
+            throw Error("Invalid placement");
         }
     }
 

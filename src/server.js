@@ -46,7 +46,7 @@ socket.on("connection", function(client){
 
         // 인증 정보 전송
         client.emit("login success", player.id, player.key);
-        
+
         console.log("User <%s> loggined", player.nickname);
     });
 
@@ -134,6 +134,7 @@ socket.on("connection", function(client){
             // 초과 접속 시도
             if (room.players.length >= 2) {
                 client.emit("cannot join room", {message: "Exceeded maximum number of players"});
+                return;
             }
             
             else {
@@ -184,6 +185,23 @@ socket.on("connection", function(client){
 
             console.log("Game <%s> resumed.", roomId);
         }
+
+        // 타임아웃 설정 (1분)
+        room.setTimer(30, () => {
+
+            if (!room.game.isGameEnd()) {
+
+                let stoneColor = room.playerStoneColors[room.players.indexOf(player)];
+
+                room.broadcast(socket, "game over", {win: stoneColor});
+                
+                // 방 삭제
+                rooms.remove(room.id);
+
+                console.log("Game <%s> ended. (Timeout)", room.id);
+            }
+        });
+        
     });
 
 
@@ -287,7 +305,6 @@ socket.on("connection", function(client){
                 }
 
                 // 타임아웃 설정 (1분)
-
                 room.setTimer(30, () => {
 
                     if (!room.game.isGameEnd()) {
