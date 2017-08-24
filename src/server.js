@@ -7,10 +7,14 @@ import OmokStone from "./OmokStone";
 import OmokPlayerList from "./OmokPlayerList";
 import OmokRoomList from "./OmokRoomList";
 
-var port = 5555;
+var port = process.env.PORT | 7343;
 
 // 서버 생성
-var server = http.createServer();
+var server = http.createServer(function (req, res) {
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.write('Omok.io server');
+    res.end();
+});
 server.listen(port);
 
 var socket = io.listen(server);
