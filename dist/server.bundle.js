@@ -547,10 +547,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-var port = 5555;
+var port = process.env.PORT | 7343;
 
 // 서버 생성
-var server = __WEBPACK_IMPORTED_MODULE_0_http___default.a.createServer();
+var server = __WEBPACK_IMPORTED_MODULE_0_http___default.a.createServer(function (req, res) {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.write('Omok.io server');
+    res.end();
+});
 server.listen(port);
 
 var socket = __WEBPACK_IMPORTED_MODULE_1_socket_io___default.a.listen(server);
@@ -566,8 +570,8 @@ var observingRoom = null;
 var waitingQueue = [];
 
 // 타임아웃 설정
-var PLAY_TIMEOUT = 200;
-var RECONNECT_TIMEOUT = 400;
+var PLAY_TIMEOUT = 30;
+var RECONNECT_TIMEOUT = 15;
 
 console.log("Server running at http://127.0.0.1:" + port + "/");
 

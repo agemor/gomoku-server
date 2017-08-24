@@ -15,7 +15,7 @@ var server = http.createServer(function (req, res) {
     res.write('Omok.io server');
     res.end();
 });
-server.listen(port);
+server.listen(port, "0.0.0.0");
 
 var socket = io.listen(server);
 
