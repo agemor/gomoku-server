@@ -1,5 +1,5 @@
-# omok.io server
-Game server for [omok.io](https://github.com/agemor/omok.io).
+# omok.io app
+Game app for [omok.io](https://github.com/agemor/omok.io).
 
 ## How to use
 ```

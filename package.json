@@ -1,30 +1,23 @@
 {
-  "name": "omok.io-server",
-  "version": "1.2.0",
-  "description": "omok.io server",
-  "main": "./dist/server.bundle.js",
+  "name": "gomoku-server",
+  "version": "2.0.0",
+  "description": "Gomoku server",
+  "main": "./src/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack && node ./dist/server.bundle.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/agemor/omok.io-server.git"
+    "url": "git+https://github.com/agemor/gomoku-server.git"
   },
-  "author": "HyunJun Kim, Minwoo Lee",
-  "license": "ISC",
+  "author": "HyunJun Kim and Minwoo Lee",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/agemor/omok.io-server/issues"
+    "url": "https://github.com/agemor/gomoku-server/issues"
   },
-  "homepage": "https://github.com/agemor/omok.io-server#readme",
-  "devDependencies": {
-    "babel-core": "^6.24.1",
-    "babel-loader": "^7.0.0",
-    "babel-preset-es2015": "^6.24.1",
-    "json-loader": "^0.5.4",
-    "webpack": "^2.5.1"
-  },
+  "homepage": "https://github.com/agemor/gomoku-server#readme",
   "dependencies": {
-    "socket.io": "^2.0.1"
+    "ws": "^7.4.1"
   }
 }

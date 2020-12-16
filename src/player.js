@@ -1,14 +1,36 @@
-import OmokPlayer from "./OmokPlayer";
+import * as WebSocket from 'ws'
 
-export default class OmokPlayerList {
+export class Player {
+
+    constructor(id, nickname, client) {
+
+        this.id = id;
+        this.key = this._generateKey();
+        this.nickname = nickname;
+        this.client = client;
+
+        this.playingRoom = null;
+    }
+
+    isConnected() {
+        return this.client.readyState === WebSocket.OPEN
+    }
+
+    _generateKey() {
+        return Math.random().toString(36).substr(2, 10);
+    }
+}
+
+
+export class PlayerList {
 
     constructor() {
         this.playerIdMap = new Map();
         this.playerList = [];
     }
 
-    register(nickname, socketId) {
-        let player = new OmokPlayer(this._generateUid(), nickname, socketId);
+    register(nickname, client) {
+        let player = new Player(this._generateUid(), nickname, client);
         this.playerIdMap.set(player.id, player);
         this.playerList.push(player);
         return player;
@@ -22,7 +44,7 @@ export default class OmokPlayerList {
 
     authenticate(playerId, playerKey) {
         if (this.playerIdMap.has(playerId)) {
-            if (this.playerIdMap.get(playerId).key == playerKey) {
+            if (this.playerIdMap.get(playerId).key === playerKey) {
                 return true;
             }
         }
@@ -36,7 +58,7 @@ export default class OmokPlayerList {
     getBySocketId(socketId) {
 
         for (let i = 0; i < this.playerList.length; i++) {
-            if (this.playerList[i].socketId == socketId) {
+            if (this.playerList[i].socketId === socketId) {
                 return this.playerList[i];
             }
         }
@@ -47,7 +69,7 @@ export default class OmokPlayerList {
     _generateUid() {
         let uid;
         do {
-            uid = Math.random().toString(36).substr(2,10);
+            uid = Math.random().toString(36).substr(2, 10);
         } while (this.playerIdMap.has(uid));
         return uid;
     }
